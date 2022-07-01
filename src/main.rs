@@ -1,17 +1,24 @@
 extern crate kiss3d;
 extern crate nalgebra as na;
-use kiss3d::light::Light;
-use kiss3d::window::Window;
-use na::{Point3, Translation3, UnitQuaternion, Vector3};
+
 use std::path::Path;
 use kiss3d::camera::{ArcBall, FirstPerson};
-use kiss3d::event::{Action, Key, WindowEvent};
-use kiss3d::scene::Object;
+use kiss3d::event::{Action, WindowEvent};
+use kiss3d::light::Light;
+use kiss3d::post_processing::SobelEdgeHighlight;
+use kiss3d::scene::SceneNode;
+use kiss3d::window::Window;
+use na::{Isometry3, Point3, Quaternion, Rotation3, Translation3, Unit, UnitQuaternion, Vector3};
+
 
 fn main() {
     let mut window = Window::new("model");
     window.set_background_color(0.0, 0.0, 0.3);
     window.set_light(Light::StickToCamera);
+    //положение камеры
+    let eye = Point3::new(60.0, 120.0, 60.0);
+    let at = Point3::new(0.0, 50.0, 0.0);
+    let mut arc_ball = ArcBall::new(eye, at);
 
     //ссылки на 3д объекты
     let base_path = Path::new("media/base.obj");
@@ -30,6 +37,8 @@ fn main() {
     let mut link4 = window.add_obj(link4_path, mtl_path, Vector3::new(0.1, 0.1, 0.1));
     let mut link5 = window.add_obj(link5_path, mtl_path, Vector3::new(0.1, 0.1, 0.1));
 
+
+
     //позиционирование
     link1.append_translation(&Translation3::new(0.0, 9.3, 0.0));
     link2.append_translation(&Translation3::new(0.0, 9.3, 0.0));
@@ -38,47 +47,62 @@ fn main() {
     link5.append_translation(&Translation3::new(0.0, 9.3, 0.0));
 
 
-    let eye = Point3::new(10.0f32, 10.0, 10.0);
-    let at = Point3::origin();
-    let mut first_person = FirstPerson::new(eye, at);
-    let mut arc_ball = ArcBall::new(eye, at);
-    let mut use_arc_ball = true;
 
+    /*let axis = Unit::new_normalize(Vector3::new(0.0, 0.0, 20.0));
+    let rot = UnitQuaternion::from_axis_angle(&axis, 0.1);
+    link5.prepend_to_local_rotation(&rot);*/
+
+
+
+
+    //вращение
+    /*let mut rotat = Isometry3::rotation(Vector3::new(0.0,0.0,0.0));
+    link5.set_local_transformation(rotat);*/
+
+    //подсветка
+    /*let mut sobel = SobelEdgeHighlight::new(4.0);
     while !window.should_close() {
-        // update the current camera.
-        for event in window.events().iter() {
+        //window.render_with_effect(&mut sobel);
+    }*/
+
+
+
+    while window.render_with_camera(&mut arc_ball) {
+
+
+        let mut axi = Vector3::z()*-0.014;
+        let mut trans = Vector3::new(-0.805, 0.005, 0.0);
+
+
+        for mut event in window.events().iter() {
             match event.value {
-                WindowEvent::Key(key, Action::Release, _) => {
-                    if key == Key::Numpad1 {
-                        use_arc_ball = true
-                    } else if key == Key::Numpad2 {
-                        use_arc_ball = false
+                WindowEvent::Key(button, Action::Press, _) => {
+                    if button == kiss3d::event::Key::A{
+
+                        let mut vec = Isometry3::new(trans, axi);
+                        link5.prepend_to_local_transformation(&vec);
+                        link4.prepend_to_local_transformation(&vec);
+
+                        /*if axi.le(){
+
+                        }*/
+
+                        println!("You pressed the button: {:?}", button);
+                    }
+                    //event.inhibited = true // override the default keyboard handler
+                    if button == kiss3d::event::Key::S{
+                        let axisangle = Vector3::z() * 0.0;
+                        let translation = Vector3::new(0.0, 9.3, 0.0);
+                        let iso = Isometry3::new(translation, axisangle);
+                        link5.set_local_transformation(iso);
+                        link4.set_local_transformation(iso);
+
+
+                        println!("You pressed the button: {:?}", button);
                     }
                 }
                 _ => {}
             }
         }
-        window.draw_line(
-            &Point3::origin(),
-            &Point3::new(1.0, 0.0, 0.0),
-            &Point3::new(1.0, 0.0, 0.0),
-        );
-        window.draw_line(
-            &Point3::origin(),
-            &Point3::new(0.0, 1.0, 0.0),
-            &Point3::new(0.0, 1.0, 0.0),
-        );
-        window.draw_line(
-            &Point3::origin(),
-            &Point3::new(0.0, 0.0, 1.0),
-            &Point3::new(0.0, 0.0, 1.0),
-        );
-
-        if use_arc_ball {
-            window.render_with_camera(&mut arc_ball);
-        } else {
-            window.render_with_camera(&mut first_person);
-        }
     }
-
 }
