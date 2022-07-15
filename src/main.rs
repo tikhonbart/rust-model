@@ -1,5 +1,7 @@
 extern crate kiss3d;
 extern crate nalgebra as na;
+use bevy::prelude::*;
+use bevy_egui::{egui, EguiContext, EguiPlugin};
 
 use std::borrow::{Borrow, BorrowMut};
 use std::path::Path;
