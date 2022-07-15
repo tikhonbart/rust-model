@@ -9,5 +9,6 @@
 
 ## Keys to use model:
 
-- A-key to rotate top node of model
-- S-key to set default position of model
+- A,S,D,F keys to select detail
+- Z,X keys to rotate 
+- C key - set default position
